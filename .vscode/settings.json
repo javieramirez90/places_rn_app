@@ -1,0 +1,8 @@
+{
+  "path-intellisense.mappings": {
+
+  },
+  "path-autocomplete.ignoredFilesPatter": [
+    "//"
+  ]
+}
