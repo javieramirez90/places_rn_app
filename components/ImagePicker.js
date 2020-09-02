@@ -1,22 +1,53 @@
-import React from 'react';
-import { View, Button, Text, StyleSheet, Image } from 'react-native';
+import React, { useState } from 'react';
+import { View, Button, Text, StyleSheet, Image, Alert } from 'react-native';
 import Colors from '../constants/Colors';
 
 import * as ImagePicker from 'expo-image-picker';
+import * as Permissions from 'expo-permissions';
 
 const ImgPicker = props => {
+  const [pickedImage, setPickedImage] = useState(null);
 
-  const takeImageHandler = () => {
-    ImagePicker.launchCameraAsync()
-    // .then(result => console.log("Resultado de la selección de imagen", result))
-    // .catch(err => console.log("Error al seleccionar la imagen", err))
+  const verifyPermissions = async () => {
+    const result = await Permissions.askAsync(Permissions.CAMERA, Permissions.CAMERA_ROLL);
+    if(result.status !== 'granted') {
+      Alert.alert(
+        'Insufficient permissions!',
+        'You need to grant camera permissions to use this app.',
+        [{ text: 'Ok' }]
+      );
+      return false;
+    }
+    return true;
+  };
+
+  const takeImageHandler = async () => {
+    const hasPermission =  await verifyPermissions();
+    if(!hasPermission) {
+      return;
+    }
+    const image = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      aspect:[16,9],
+      quality: 0.5
+    });
+
+    setPickedImage(image.uri);
+    props.onImageTaken(image.uri)
   };
 
   return (
     <View style={styles.imagePicker}>
       <View style={styles.imagePreview}>
-        <Text>No image picked yet.</Text>
-        <Image style={styles.image}/>
+      {
+        pickedImage ?
+          <Image
+            style={styles.image}
+            source={{uri: pickedImage}}
+          />
+        :
+          <Text>No image picked yet.</Text>
+      }
       </View>
       <Button
         title="Take Image"
@@ -29,7 +60,8 @@ const ImgPicker = props => {
 
 const styles = StyleSheet.create({
   imagePicker:{
-    alignItems: 'center'
+    alignItems: 'center',
+    marginBottom: 15
   },
   imagePreview:{
     width: '100%',
